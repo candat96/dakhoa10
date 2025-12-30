@@ -1,0 +1,51 @@
+# WordPress
+wp-content/uploads/
+wp-content/upgrade/
+wp-content/cache/
+wp-content/plugins/*
+!wp-content/plugins/.gitkeep
+
+# Keep theme
+!bvdk10-theme/
+
+# Docker
+docker/data/
+
+# Backups
+backups/
+*.sql
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Logs
+*.log
+npm-debug.log*
+
+# Dependencies
+node_modules/
+vendor/
+
+# Build
+dist/
+build/
+
+# Temp
+tmp/
+temp/
+*.tmp

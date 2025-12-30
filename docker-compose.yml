@@ -1,0 +1,101 @@
+services:
+  # WordPress
+  wordpress:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bvdk10-wordpress
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: bvdk10_user
+      WORDPRESS_DB_PASSWORD: bvdk10_secret_password
+      WORDPRESS_DB_NAME: bvdk10_db
+      WORDPRESS_TABLE_PREFIX: wp_
+      WORDPRESS_DEBUG: 'true'
+    volumes:
+      # Theme development - auto sync
+      - ./bvdk10-theme:/var/www/html/wp-content/themes/bvdk10-theme
+      # Plugins persistence
+      - wordpress_plugins:/var/www/html/wp-content/plugins
+      # Uploads persistence
+      - wordpress_uploads:/var/www/html/wp-content/uploads
+      # Custom PHP config
+      - ./docker/php.ini:/usr/local/etc/php/conf.d/custom.ini
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - bvdk10-network
+
+  # MySQL Database
+  db:
+    image: mysql:8.0
+    container_name: bvdk10-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: bvdk10_db
+      MYSQL_USER: bvdk10_user
+      MYSQL_PASSWORD: bvdk10_secret_password
+      MYSQL_ROOT_PASSWORD: root_secret_password
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./docker/mysql.cnf:/etc/mysql/conf.d/custom.cnf
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - bvdk10-network
+
+  # phpMyAdmin (optional - for database management)
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: bvdk10-phpmyadmin
+    restart: unless-stopped
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: db
+      PMA_USER: bvdk10_user
+      PMA_PASSWORD: bvdk10_secret_password
+      UPLOAD_LIMIT: 64M
+    depends_on:
+      - db
+    networks:
+      - bvdk10-network
+
+  # WP-CLI (for command line operations)
+  wpcli:
+    image: wordpress:cli
+    container_name: bvdk10-wpcli
+    volumes:
+      - wordpress_core:/var/www/html
+      - ./bvdk10-theme:/var/www/html/wp-content/themes/bvdk10-theme
+      - wordpress_plugins:/var/www/html/wp-content/plugins
+      - wordpress_uploads:/var/www/html/wp-content/uploads
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: bvdk10_user
+      WORDPRESS_DB_PASSWORD: bvdk10_secret_password
+      WORDPRESS_DB_NAME: bvdk10_db
+    depends_on:
+      - db
+      - wordpress
+    networks:
+      - bvdk10-network
+    entrypoint: ["wp", "--allow-root"]
+    user: "33:33"
+
+volumes:
+  db_data:
+  wordpress_core:
+  wordpress_plugins:
+  wordpress_uploads:
+
+networks:
+  bvdk10-network:
+    driver: bridge
