@@ -166,3 +166,53 @@ function bvdk10_disable_gutenberg($use_block_editor, $post) {
     return $use_block_editor;
 }
 add_filter('use_block_editor_for_post', 'bvdk10_disable_gutenberg', 10, 2);
+
+/**
+ * ============================================================
+ * THEME ACTIVATION - AUTO SETUP
+ * ============================================================
+ */
+
+/**
+ * Run setup on theme activation
+ */
+function bvdk10_theme_activation() {
+    // Flush rewrite rules
+    flush_rewrite_rules();
+
+    // Set default options
+    if (!get_option('bvdk10_installed')) {
+        // Set permalink structure
+        update_option('permalink_structure', '/%postname%/');
+
+        // Set timezone
+        update_option('timezone_string', 'Asia/Ho_Chi_Minh');
+
+        // Set date format
+        update_option('date_format', 'd/m/Y');
+
+        // Set blog name if empty
+        if (get_option('blogname') === 'Just another WordPress site' || empty(get_option('blogname'))) {
+            update_option('blogname', 'Bệnh viện Đa khoa số 10');
+        }
+
+        // Mark as installed
+        update_option('bvdk10_installed', true);
+    }
+}
+add_action('after_switch_theme', 'bvdk10_theme_activation');
+
+/**
+ * Admin notice for required plugins
+ */
+function bvdk10_admin_notices() {
+    // Check if ACF is active (Free version is fine)
+    if (!class_exists('ACF')) {
+        ?>
+        <div class="notice notice-warning is-dismissible">
+            <p><strong>BVDK10 Theme:</strong> Vui lòng cài đặt và kích hoạt plugin <a href="<?php echo admin_url('plugin-install.php?s=advanced+custom+fields&tab=search&type=term'); ?>">Advanced Custom Fields</a> để sử dụng các tính năng của theme.</p>
+        </div>
+        <?php
+    }
+}
+add_action('admin_notices', 'bvdk10_admin_notices');
